@@ -1,4 +1,4 @@
-#Please read instruction before you do any action on this repository
+# Please read instruction before you do any action on this repository
 
 Steps to run the project
 1. Open new terminal from the vscode
@@ -7,10 +7,12 @@ Steps to run the project
 4. run 'npm run start:nodemon' to run the project in continously, any change in the files trigger the server to rerun automatically. This helps in the development of the project
 5. to stop the server, press ctrl + C. This quits the server
 
-#Troubleshooting
+# Troubleshooting
+
 If you are not able to run the project, make sure you install the dependencies running the 'npm install' from terminal
 
-#Git commands to work
+# Git commands to work
+
 git status  -  to check the list of all files modified
 git fetch - this fetches all the branches you create on this repository
 git checkout 'origin/main' - this checks out the main branch for you to work
