@@ -1,0 +1,22 @@
+#Please read instruction before you do any action on this repository
+
+Steps to run the project
+1. Open new terminal from the vscode
+2. run 'npm install' to install the node modules. This installs all the project dependencies
+3. run 'npm run start' to run the project. This kicks of the project in local, with front end and backend of this application
+4. run 'npm run start:nodemon' to run the project in continously, any change in the files trigger the server to rerun automatically. This helps in the development of the project
+5. to stop the server, press ctrl + C. This quits the server
+
+#Troubleshooting
+If you are not able to run the project, make sure you install the dependencies running the 'npm install' from terminal
+
+#Git commands to work
+git status  -  to check the list of all files modified
+git fetch - this fetches all the branches you create on this repository
+git checkout 'origin/main' - this checks out the main branch for you to work
+git pull - this pulls the updates from the repository to your local branch
+git branch -D 'mybranch' - this command deletes the local branch with name 'mybranch'
+
+- Before you try to push the updates, make sure you get the updates from the origin branch
+- resolve any merge conflict in the merge editor, here you can see the end result of the merge, edit as required and push the changes
+- Push the changes by staging it.
