@@ -1,6 +1,8 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const generateToken = require('../utils/generateToken');
+const protect = require('../middleware/authProtect');
 
 const router = express.Router();
 
@@ -20,7 +22,7 @@ router.post('/signup', async (req, res, next) => {
 
     const user = await User.create({ name, email, password });
 
-    res.status(201).json({ message: 'User created successfully', user: { name, email } });
+    res.status(201).json({ message: 'User created successfully', user: { name, email }, token: generateToken(user) });
   } catch (error) {
     next(err);
     // res.status(500).json({ message: 'Error creating user', error: error.message });
@@ -40,19 +42,54 @@ router.post('/login', async (req, res, next) => {
     }
     else {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid email or password' });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+    const token = generateToken(user);
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    res.status(200).json({ message: 'Login successful', token });
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: {
+        name: user.name,
+        email: user.email
+      }});
    }
   } catch (error) {
     console.log(error);
     next(error);
     // res.status(500).json({ message: 'Error logging in', error: error.message });
+  }
+});
+
+// ✏️ Update User (Protected)
+router.put('/update', protect, async (req, res, next) => {
+  const { name, email, password } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (password) user.password = await bcrypt.hash(password, 10);
+
+    await user.save();
+    res.json({ message: 'User updated', user: { name: user.name, email: user.email } });
+  } catch (err) {
+    next(err);
+    // res.status(500).json({ error: err.message });
+  }
+});
+
+// 🗑️ Delete User (Protected)
+router.delete('/delete', protect, async (req, res, next) => {
+  try {
+    await User.findByIdAndDelete(req.user._id);
+    res.json({ message: 'User account deleted' });
+  } catch (err) {
+    next(err);
+    // res.status(500).json({ error: err.message });
   }
 });
 

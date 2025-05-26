@@ -3,11 +3,11 @@ const path = require('path');
 const cors = require('cors');
 
 // const apiRoutes = require('./Backend');
+const connectDB = require('./Backend/db/connect');
 const authRoutes = require('./Backend/routes/auth');
 const appointmentRoutes = require('./Backend/routes/appointments');
 const logger = require('./backend/middleware/logger');
 const errorHandler = require('./backend/middleware/errorHandler');
- 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,11 +49,16 @@ app.get(/^\/(.+\.html)$/, (req, res) => {
 
 // app.use('/api', apiRoutes);
 app.use('/api/auth', authRoutes);
+// app.use('/api/auth', require('./Backend/routes/auth'));
 app.use('/api/appointments', appointmentRoutes);
 
 
-// app.use('/api/auth', require('./Backend/routes/auth'));
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('❌ Database connection failed:', err.message);
+  process.exit(1); // Exit the process with failure
 });
+

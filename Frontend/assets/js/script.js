@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Select the login form
   const loginForm = document.getElementById('login-form');
   const signupForm = document.getElementById('signup-form');
+  const updateForm = document.getElementById('update-form');
+  const profileForm = document.getElementById('profile-form');
 
   if (loginForm) {
     // Add a submit event listener for login
@@ -91,6 +93,106 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     console.error('Signup form not found');
   }
+
+  if(updateForm)
+  {
+    updateForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent the default form submission
+      console.log('update form submitted'); // Debugging output
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to update your profile.');
+        return;
+      }
+      // Retrieve form values
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // Debugging output for form values
+      console.log('Name:', name);
+      console.log('Email:', email);
+      console.log('Password:', password);
+      // const name = updateForm.name.value.trim();
+      // const email = updateForm.email.value.trim();
+      // const password = updateForm.password.value;
+      const updateData = {};
+      if (name) updateData.name = name;
+      if (email) updateData.email = email;
+      if (password) updateData.password = password;
+
+      if (Object.keys(updateData).length === 0) {
+        alert('Please enter at least one field to update.');
+        return;
+      }
+
+      try {
+        // Make a fetch call to the signup API
+        const response = await fetch(`${apiBase}/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // Include the token in the request headers
+          },
+          body: JSON.stringify(updateData),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Profile updated successful!');
+          window.location.href = '/'; // Redirect to login page
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      } catch (error) {
+        console.error('Update error:', error);
+        alert('An error occurred. Please try again.');
+      }
+    });
+  }
+
+  if(profileForm)
+    {
+      profileForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent the default form submission
+        console.log('profile form submitted'); // Debugging output
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('You must be logged in to delete your profile.');
+          return;
+        }
+
+        const confirmDelete = confirm('Are you sure you want to delete your profile? This action cannot be undone.');
+        // Retrieve form values
+        if(!confirmDelete) return;
+
+        try {
+          // Make a fetch call to the signup API
+
+          const response = await fetch(`${apiBase}/delete`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`, // Include the token in the request headers
+            }
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert('Profile deleted successful!');
+            localStorage.removeItem('token');
+            window.location.href = '/'; // Redirect to login page
+          } else {
+            alert(`Error: ${data.message}`);
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          alert('An error occurred. Please try again.');
+        }
+      });
+    }
 });
 
 // Check if User is Logged In
