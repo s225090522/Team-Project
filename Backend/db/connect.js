@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    // 'mongodb://admin:password@localhost:27017/homeglam?authSource=admin'
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/homeglam', {
+    console.log(process.env.MONGO_URI || 'mongodb://localhost:27017/homeglam');
+    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/homeglam?authSource=admin', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

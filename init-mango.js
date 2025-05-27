@@ -25,4 +25,27 @@ if (!db.getCollectionNames().includes('services')) {
   });
 }
 
+if( !db.getCollectionNames().includes('bookings')) {
+  db.createCollection('bookings');
+  db.bookings.insertOne({
+    name: 'John Doe',
+    service: 'Haircut',
+    date: new Date(),
+    time: '10:00 AM - 11:00 AM'
+  });
+  print('✅ Bookings collection created and seeded.');
+}
+
+if( !db.getCollectionNames().includes('enquire')) {
+  db.createCollection('enquire');
+  db.enquire.insertOne({
+    name: 'Jane Doe',
+    email: 'nobody@gmail.com',
+    message: 'Hello, I would like to know more about your services.',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+  print('✅ Enquire collection created and seeded.');
+}
+
 print('✅ Database and collections initialized!');

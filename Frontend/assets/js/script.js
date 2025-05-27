@@ -1,12 +1,16 @@
 const apiBase = '/api/auth';
+const apiOther = '/api';
 
 // Ensure the DOM is fully loaded before adding event listeners
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Select the login form
   const loginForm = document.getElementById('login-form');
   const signupForm = document.getElementById('signup-form');
   const updateForm = document.getElementById('update-form');
   const profileForm = document.getElementById('profile-form');
+  const appointmentForm = document.getElementById('appointment-form');
+  const contactForm = document.getElementById('contact-form'); // Assuming you have a contact form
+  const token = getToken();
 
   if (loginForm) {
     // Add a submit event listener for login
@@ -47,8 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('An error occurred during login. Please try again.');
       }
     });
-  } else {
-    console.error('Login form not found');
   }
 
   if (signupForm) {
@@ -90,17 +92,41 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('An error occurred during signup. Please try again.');
       }
     });
-  } else {
-    console.error('Signup form not found');
   }
 
   if(updateForm)
   {
+    try {
+      // Make a fetch call to the signup API
+      const response = await fetch(`${apiBase}/view`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('User data:', data.user);
+        // Populate the form fields with user data
+        document.getElementById('name').value = data.user.name || '';
+        document.getElementById('email').value = data.user.email || '';
+        // Password field should not be pre-filled for security reasons
+        // document.getElementById('password').value = ''; // Keep password field empty
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('An error occurred. Please try again.');
+    }
+
     updateForm.addEventListener('submit', async (event) => {
       event.preventDefault(); // Prevent the default form submission
       console.log('update form submitted'); // Debugging output
 
-      const token = localStorage.getItem('token');
       if (!token) {
         alert('You must be logged in to update your profile.');
         return;
@@ -110,10 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      // Debugging output for form values
-      console.log('Name:', name);
-      console.log('Email:', email);
-      console.log('Password:', password);
       // const name = updateForm.name.value.trim();
       // const email = updateForm.email.value.trim();
       // const password = updateForm.password.value;
@@ -154,7 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if(profileForm)
-    {
+  {
+    const decodedToken = decodeToken();
+    if(decodedToken)
+      decodedToken.role === 'admin' ?
+        profileForm.classList.add('hidden')
+        : profileForm.classList.remove('hidden');
       profileForm.addEventListener('submit', async (event) => {
         event.preventDefault(); // Prevent the default form submission
         console.log('profile form submitted'); // Debugging output
@@ -192,44 +219,207 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('An error occurred. Please try again.');
         }
       });
+  }
+
+  if (appointmentForm) {
+    appointmentForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const service = document.getElementById('service').value;
+      let date = document.getElementById('date').value;
+      data = formatDate(date);
+      console.log('Selected date:', date);''
+      const time = document.getElementById('time').value;
+
+      try {
+        console.log('Sending data:', { name, service, date, time });
+
+        // Replace with your backend API endpoint
+        const response = await fetch('/api/appointments/book', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, service, date, time }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // alert(`Appointment booked successfully! ID: ${result.appointment._id}`);
+          window.location.href = `./confirmation.html?id=${result.appointment._id}&service=${result.appointment.service}&date=${result.appointment.date}&time=${result.appointment.time}&name=${result.appointment.name}`; // Pass ID to confirmation page
+        } else {
+          const error = await response.json();
+          console.error('Error response:', error);
+          alert(`Error: ${error.error}`);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        alert('An error occurred while booking the appointment. Please try again.');
+      }
+    });
+    const service = getUrlParameter('service');
+      if (service) {
+        const serviceDropdown = document.getElementById('service');
+        for (let i = 0; i < serviceDropdown.options.length; i++) {
+          if (serviceDropdown.options[i].value === service) {
+            serviceDropdown.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      if(!token) {
+        document.getElementById('service-selection').innerHTML = '<h2 style="color:red">Please login to book an appointment, redirecting you to login page now...</h2>';
+        document.getElementsByTagName('button')[0].disabled = true;
+        // document.getElementsByTagName('button')[0].className = 'disabled:opacity-50 disabled:bg-gray-400';
+        document.querySelector('button[type="submit"]').style.backgroundColor = 'gray';
+        document.querySelector('button[type="submit"]').style.color = 'lightgray';
+        document.querySelector('button[type="submit"]').style.cursor = 'not-allowed';
+      }
+  }
+
+  if (contactForm) {
+    contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Prevent default form submission
+    console.log('Contact form submitted'); // Debugging output
+
+    // Retrieve form values
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const message = document.getElementById('message').value;
+
+    // Debugging output for form values
+    console.log('Name:', name);
+    console.log('Email:', email);
+    console.log('Message:', message);
+
+    try {
+      // Make a fetch call to the contact API (adjust the endpoint as needed)
+      const response = await fetch(`${apiOther}/enquire`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Your enquiry has been sent successfully!');
+        contactForm.reset(); // Reset the form after successful submission
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      alert('An error occurred while sending your message. Please try again.');
     }
+  });
+  }
+
 });
+
+const logout = () => {
+  // Clear the token from localStorage
+  if(confirm('Are you sure you want to log out?') && localStorage.getItem('token')) {
+    localStorage.removeItem('token');
+    console.log('User logged out successfully.');
+    alert('You have been logged out successfully.');
+    window.location.href = '/';
+  }
+}
+
+// Function to get URL parameter value
+const getUrlParameter = (name) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+}
+
+const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');  // Ensure 2-digit day
+      const month = String(date.getMonth() + 1).padStart(2, '0');  // Ensure 2-digit month
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+}
+
+// Capitalize first letter of service name
+const capitalizeFirstLetter = (str) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+const getToken = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('No token found in localStorage.');
+    return null;
+  }
+  return token;
+}
+
+const decodeToken = () => {
+  const token = getToken();
+  if (!token) {
+    console.error('No token found to decode.');
+    return null;
+  }
+  try {
+    return jwt_decode(token);
+  } catch (error) {
+    console.error('Failed to decode token:', error);
+    return null;
+  }
+}
 
 // Check if User is Logged In
 window.onload = () => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const loginLink = document.getElementById('login-link');
   const signupLink = document.getElementById('signup-link');
+  const adminLink = document.getElementById('admin-link');
+  const logoutLink = document.getElementById('logout-link');
+  const profilelink = document.getElementById('profile-link');
 
-  // Check the current page
-  const currentPage = window.location.pathname;
-  const isLoginPage = currentPage.includes('login.html');
-  const isSignupPage = currentPage.includes('signup.html');
-  const isIndexPage = currentPage.includes('index.html');
-  const isServicePage = currentPage.includes('services.html');
+  const appointmentId = getUrlParameter('id');
+  const service = getUrlParameter('service');
+  const date = getUrlParameter('date');
+  const time = getUrlParameter('time');
+  const name = getUrlParameter('name');
+
+  if (appointmentId && service && date && time && name) {
+    document.getElementById('appointment-id').innerText = appointmentId;
+    document.getElementById('service').innerText = capitalizeFirstLetter(service);
+    document.getElementById('date').innerText = date;
+    document.getElementById('time').innerText = time;
+    document.getElementById('name').innerText = name;
+  } else {
+    // document.getElementById('error-message').innerText = 'Invalid appointment details.';
+  }
 
   if (token) {
     console.log('User is logged in.');
+    const decoded = decodeToken();
     // Hide login and signup links
-    if (loginLink) loginLink.style.display = 'none';
-    if (signupLink) signupLink.style.display = 'none';
-  } else if (!isLoginPage && !isSignupPage && !isIndexPage & !isServicePage) {
-    console.log('User is not logged in. Redirecting to login page...');
-    const app_form = document.getElementById('appointment-form');
-    if(app_form) {
-      document.getElementById('service-selection').innerHTML = '<h2 style="color:red">Please login to book an appointment, redirecting you to login page now...</h2>';
-      document.getElementsByTagName('button')[0].disabled = true;
-      // document.getElementsByTagName('button')[0].className = 'disabled:opacity-50 disabled:bg-gray-400';
-      document.querySelector('button[type="submit"]').style.backgroundColor = 'gray';
-      document.querySelector('button[type="submit"]').style.color = 'lightgray';
-      document.querySelector('button[type="submit"]').style.cursor = 'not-allowed';
+    loginLink.classList.add('hidden');
+    signupLink.classList.add('hidden');
+    profilelink.classList.remove('hidden');
+    logoutLink.classList.remove('hidden');
+    // Show admin link if role is admin
+    if (decoded.role === 'admin') {
+      adminLink.classList.remove('hidden');
     }
-    // alert('User is not logged in. Redirecting to login page...');
+  } else {
+    console.log('User is not logged in.');
+    // Show login and signup links
+    if (loginLink) loginLink.classList.remove('hidden');
+    if (signupLink) signupLink.classList.remove('hidden');
+    logoutLink.classList.add('hidden');
+    adminLink.classList.add('hidden');
     setTimeout(() => {
       // Redirect to login page
+      if (!loginLink)
         window.location.href = '/signin/login.html';
     }, 5000);
-    // Redirect to login page only if not already on login or signup page
-    // window.location.href = '/signin/login.html';
   }
 };

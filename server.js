@@ -6,6 +6,7 @@ const cors = require('cors');
 const connectDB = require('./Backend/db/connect');
 const authRoutes = require('./Backend/routes/auth');
 const appointmentRoutes = require('./Backend/routes/appointments');
+const routes = require('./Backend/routes/routes'); // Assuming this is the main routes file
 const logger = require('./backend/middleware/logger');
 const errorHandler = require('./backend/middleware/errorHandler');
 
@@ -51,6 +52,7 @@ app.get(/^\/(.+\.html)$/, (req, res) => {
 app.use('/api/auth', authRoutes);
 // app.use('/api/auth', require('./Backend/routes/auth'));
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api',routes);
 
 
 connectDB().then(() => {

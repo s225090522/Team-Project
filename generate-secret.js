@@ -10,7 +10,6 @@ const generateSecret = () => crypto.randomBytes(64).toString('hex');
 
 // Load or create .env file
 let env = '';
-
 if (fs.existsSync(envPath)) {
   env = fs.readFileSync(envPath, 'utf-8');
   if (!env.includes('JWT_SECRET')) {
