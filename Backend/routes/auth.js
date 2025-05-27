@@ -6,21 +6,27 @@ const protect = require('../middleware/authProtect');
 
 const router = express.Router();
 
+router.get('/view',protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ message: 'User details', user: { name: user.name, email: user.email } });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
 // Signup Route
 router.post('/signup', async (req, res, next) => {
   const { name, email, password } = req.body;
 
   try {
-    if(name == "dhanush"
-    && email == "admin@gmail.com"
-    && password == "password") {
-      res.status(201).json({ message: 'User created successfully', user: { name, email } })
-    }
-
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'Email already exists' });
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, role: name == 'admin' ? 'admin' : 'user' });
 
     res.status(201).json({ message: 'User created successfully', user: { name, email }, token: generateToken(user) });
   } catch (error) {
@@ -36,11 +42,6 @@ router.post('/login', async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-
-    if (email === 'admin@gmail.com' && password === 'password') {
-      res.json({ success: true, token: 'fake-jwt-token' });
-    }
-    else {
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
       return res.status(400).json({ message: 'Invalid email or password' });
@@ -54,7 +55,6 @@ router.post('/login', async (req, res, next) => {
         name: user.name,
         email: user.email
       }});
-   }
   } catch (error) {
     console.log(error);
     next(error);

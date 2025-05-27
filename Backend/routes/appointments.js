@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const appointment = require('../models/bookings');
 
 // POST route to book an appointment
 router.post('/book', (req, res) => {
@@ -11,14 +12,17 @@ router.post('/book', (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  // Simulate saving the appointment to a database
-  const appointment = { id: Date.now(), name, service, date, time };
-
-  // Respond with a success message
-  res.status(201).json({
-    message: 'Appointment booked successfully',
-    appointment,
-  });
+  appointment.create({ name, service, date, time })
+    .then((newAppointment) => {
+      res.status(201).json({
+        message: 'Appointment booked successfully',
+        appointment: newAppointment,
+      });
+    })
+    .catch((error) => {
+      console.error('Error booking appointment:', error);
+      res.status(500).json({ error: 'Failed to book appointment' });
+    });
 });
 
 module.exports = router;

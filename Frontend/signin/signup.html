@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign Up - HomeGlam Salon</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
   <script src="./../assets/js/script.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
@@ -16,9 +17,14 @@
       </div>
       <nav class="space-x-6 text-gray-700 font-medium">
         <a href="/" class="hover:text-yellow-600">Home</a>
-        <a href="#" class="hover:text-yellow-600">About</a>
-        <a href="#" class="hover:text-yellow-600">Contact</a>
-        <a href="login.html" class="text-yellow-600 hover:text-yellow-700">Login</a>
+        <a href="../about.html" class="hover:text-yellow-600">About</a>
+        <a href="../contact.html" class="hover:text-yellow-600">Contact</a>
+        <a id="admin-link" href="./admin/manage.html" class="text-yellow-600 hover:text-yellow-700 hidden">Admin</a>
+        <!-- Added Login/Signup Links -->
+        <a id="login-link" href="login.html" class="text-yellow-600 hover:text-yellow-700">Login</a>
+        <a id="signup-link"  href="signup.html" class="text-yellow-600 hover:text-yellow-700">Sign Up</a>
+        <a id="profile-link"  href="../customer/profile.html" class="text-yellow-600 hover:text-yellow-700 hidden">My Profile</a>
+        <a id="logout-link" href="#" class="text-yellow-600 hover:text-yellow-700 hidden" onclick="return logout()">Logout</a>
       </nav>
     </div>
   </header>
