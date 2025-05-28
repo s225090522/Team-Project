@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const updateForm = document.getElementById('update-form');
   const profileForm = document.getElementById('profile-form');
   const appointmentForm = document.getElementById('appointment-form');
-  const contactForm = document.getElementById('contact-form'); // Assuming you have a contact form
+  const contactForm = document.getElementById('contact-form');
+  const adminForm = document.getElementById('admin-form');
   const token = getToken();
 
   if (loginForm) {
@@ -275,6 +276,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelector('button[type="submit"]').style.backgroundColor = 'gray';
         document.querySelector('button[type="submit"]').style.color = 'lightgray';
         document.querySelector('button[type="submit"]').style.cursor = 'not-allowed';
+        setTimeout(() => {
+          // Redirect to login page
+          window.location.href = '/signin/login.html';
+        }, 5000); // Redirect after 5 seconds
       }
   }
 
@@ -318,7 +323,137 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   }
 
+  if (adminForm) {
+      var table = new Tabulator("#bookings-table", {
+        data: [], // Your booking data here
+        layout: "fitColumns",
+        columns: [
+          { title: "ID", field: "_id" },
+          { title: "Name", field: "name", editor: "input" },
+          { title: "Service", field: "service", editor: "input" },
+          { title: "Date",
+            field: "date",
+            formatter: (cell) => {
+              const value = cell.getValue();
+              if (!value) return "";
+              const pre = value.split("T")[0]; // Get the date part from ISO string
+              const parts = pre.split("-");
+              return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+            },
+            editor: flatpickrEditor("date"),
+          },
+          { title: "Time",
+            field: "time",
+            formatter: (cell) => {
+              const value = cell.getValue();
+              if (!value) return "";
+              const [h, m] = value.split(":");
+              return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+            },
+            editor: flatpickrEditor("time"),
+          },
+          { title: "Action", formatter: "buttonCross", width: 100, align: "center", cellClick: (e, cell) => {
+              const id = cell.getRow().getData()._id;
+              deleteBooking(id); // Your delete logic here
+            }
+          },
+        ],
+      });
+
+      try {
+        const data = await getBookings(); // Fetch bookings data and populate the table
+        table.setData(data);
+
+        table.on("cellEdited", async (cell) => {
+          const field = cell.getField();
+          let value = cell.getValue();
+          if (field === "date") {
+            value = formatDateToISO(value);
+          }
+
+          const va = {
+            name: field === 'name'? value : cell.getRow().getData().name,
+            service: field === 'service'? value : cell.getRow().getData().service,
+            date: field === 'date' ? value : cell.getRow().getData().date,
+            time: field === 'time' ? value : cell.getRow().getData().time,
+          };
+          updateBooking(cell.getRow().getData()._id, va); // Update the booking with the new value
+        });
+      } catch (error) {
+        console.error('Admin form error:', error);
+        alert('An error occurred while fetching bookings. Please try again.');
+      }
+  }
 });
+
+const formatDateToISO = (dateStr) => {
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  return dateStr;
+}
+
+// not used
+const formatDateForFlatpickr = (isoDateString) =>{
+  if (!isoDateString) return null;
+  const date = new Date(isoDateString);
+  if (isNaN(date)) return null;
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`; // d/m/Y format
+}
+
+const flatpickrEditor = (mode) => {
+  return function (cell, onRendered, success, cancel) {
+    const input = document.createElement("input");
+    input.style.width = "100%";
+
+    // Parse the initial value into a valid format for Flatpickr
+    let initialValue = cell.getValue();
+    if (mode === "date") {
+      if (initialValue) {
+         const parts = initialValue.split("-"); // from 'YYYY-MM-DD'
+         if (parts.length === 3) {
+          initialValue = `${parts[2]}/${parts[1]}/${parts[0]}`; // 'DD/MM/YYYY'
+        }
+        initialValue = formatDateForFlatpickr(initialValue);
+      }
+    }
+
+    if (mode === "time") {
+      // Ensure time is in 'HH:mm' format
+      initialValue = initialValue || "00:00";
+    }
+
+    input.value = initialValue || "";
+    onRendered(() => input.focus());
+
+    const fp = flatpickr(input, {
+      enableTime: mode === "time",
+      noCalendar: mode === "time",
+      dateFormat: mode === "time" ? "H:i" : "d/m/Y",
+      time_24hr: true,
+      defaultDate: initialValue || null,
+      onClose: () => {
+        success(input.value);
+      },
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        success(input.value);
+      } else if (e.key === "Escape") {
+        cancel();
+      }
+    });
+
+    return input;
+  };
+}
 
 const logout = () => {
   // Clear the token from localStorage
@@ -328,6 +463,12 @@ const logout = () => {
     alert('You have been logged out successfully.');
     window.location.href = '/';
   }
+}
+
+const forceLogout = () => {
+  // Clear the token from localStorage
+  localStorage.removeItem('token');
+  console.log('User force logged out successfully.');
 }
 
 // Function to get URL parameter value
@@ -372,6 +513,117 @@ const decodeToken = () => {
   }
 }
 
+const getBookings = async () => {
+  try {
+    const token = getToken();
+    if(token === null) { alert('You must be logged in to view bookings. Redirecting to login page...');
+      setTimeout(() => {
+        forceLogout();
+      }, 3000); // Redirect after 3 seconds
+      window.location.href = '/signin/login.html'; // Redirect to login page
+      return;
+    }
+    const response = await fetch('/api/appointments/allbookings', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return data.bookings; // Return the bookings data
+    } else {
+      console.error('Failed to fetch bookings:', data.error);
+      alert(data.error || 'Failed to fetch bookings.');
+      if(data.message == 'Not authorized, token failed' && data.error == 'jwt expired') {
+        alert('You are not authorized to view this page. Redirecting to login page...');
+        forceLogout(); // Call force logout function to clear token and redirect
+        setTimeout(() => {
+          window.location.href = '/signin/login.html';
+        }, 3000);
+      }
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    alert('An error occurred while fetching bookings. Please try again.');
+    return [];
+  }
+}
+
+const deleteBooking = async (id) => {
+  try {
+    const token = getToken();
+    if(token === null) { alert('You must be logged in to delete a booking. Redirecting to login page...');
+      setTimeout(() => {
+        forceLogout();
+      }, 3000); // Redirect after 3 seconds
+      window.location.href = '/signin/login.html'; // Redirect to login page
+      return;
+    }
+    const confirmDelete = confirm('Are you sure you want to delete this booking?');
+    if (!confirmDelete) return;
+
+    const url = `/api/appointments/delete/${id}`
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert(result.message || 'Booking deleted successfully.');
+    } else {
+      alert(result.error || 'Failed to delete booking.');
+    }
+    window.location.reload();
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    alert('An error occurred while deleting the booking. Please try again.');
+    return;
+  }
+}
+
+const updateBooking = async (id, updatedData) => {
+  try {
+    const token = getToken();
+    if(token === null) { alert('You must be logged in to update a booking. Redirecting to login page...');
+      setTimeout(() => {
+        forceLogout();
+      }, 3000); // Redirect after 3 seconds
+      window.location.href = '/signin/login.html'; // Redirect to login page
+      return;
+    }
+    const url = `/api/appointments/update/${id}`;
+    const response = fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatedData),
+    });
+    const result = await response;
+    if (result.ok) {
+      // alert('Booking updated successfully!');
+      console.log('Booking updated successfully.');
+    } else {
+      alert(`Error updating booking: ${result.message}`);
+      setTimeout(() => {
+        window.location.reload(); // Reload the page to reflect changes
+      }, 3000); // Reload after 3 seconds
+    }
+  }
+  catch (error) {
+    console.error('Error updating booking:', error);
+    alert('An error occurred while updating the booking. Please try again.');
+  }
+}
 // Check if User is Logged In
 window.onload = () => {
   const token = getToken();

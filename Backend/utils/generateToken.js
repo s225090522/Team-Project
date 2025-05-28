@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, role: user.role || 'user' }, // Include role if available
+    { id: user._id, role: user.role || 'user' , name: user.name }, // Include role if available
     process.env.JWT_SECRET || 'yoursecretkey', // Use dotenv in production!
     { expiresIn: process.env.JWT_EXPIRES_IN || '1h' } // Default to 1 hour if not set
   );
