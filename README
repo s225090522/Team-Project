@@ -7,7 +7,7 @@ MongoDB Password: password
 
 Mongo Express UI:
 
-URL: http://localhost:8081
+URL: http://localhost:7071
 
 Login: admin / password
 
@@ -15,7 +15,7 @@ To Start the Services:
 docker compose up -d
 
 On login, give
-http://localhost:8081
+http://localhost:7081
 admin/pass to login to mangodb express
 
 # To inspect db is running
