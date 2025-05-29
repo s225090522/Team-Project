@@ -20,7 +20,7 @@ if (fs.existsSync(envPath)) {
     console.log('✅ .env already contains JWT_SECRET');
   }
 } else {
-  env = `MONGO_URI=mongodb://admin:password@localhost:27017/homeglam\nJWT_SECRET=${generateSecret()}\n`;
+  env = `MONGO_URI=mongodb://localhost:27017/homeglam\nJWT_SECRET=${generateSecret()}\n`;
   fs.writeFileSync(envPath, env);
   console.log('✅ .env file created with JWT_SECRET');
 }
