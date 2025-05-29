@@ -19,11 +19,21 @@
         <a href="/" class="hover:text-yellow-600">Home</a>
         <a href="./about.html" class="text-yellow-600 hover:text-yellow-700">About</a>
         <a href="./contact.html" class="hover:text-yellow-600">Contact</a>
-        <a id="admin-link" href="./admin/manage.html" class="text-yellow-600 hover:text-yellow-700 hidden">Admin</a>
         <a id="login-link" href="./signin/login.html" class="text-yellow-600 hover:text-yellow-700">Login</a>
         <a id="signup-link"  href="./signin/signup.html" class="text-yellow-600 hover:text-yellow-700">Sign Up</a>
-        <a id="profile-link"  href="./customer/profile.html" class="text-yellow-600 hover:text-yellow-700 hidden">My Profile</a>
-        <a id="logout-link" href="#" class="text-yellow-600 hover:text-yellow-700 hidden" onclick="return logout()">Logout</a>
+        <div id="user-dropdown" class="relative inline-block text-lef hidden">
+          <button id="user-name" class="flex items-center gap-1 text-yellow-600 hover:text-yellow-700 font-medium focus:outline-none">
+            <span id="username-text"><!-- Username will be injected here --></span>
+            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+            <a id="admin-link" href="./admin/manage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hidden">Administrator</a>
+            <a id="profile-link" href="./customer/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a>
+            <button id="logout-link" onclick="logout()" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+          </div>
+        </div>
       </nav>
     </div>
   </header>

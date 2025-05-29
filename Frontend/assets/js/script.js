@@ -324,13 +324,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (adminForm) {
+      const ddValues = ["Haircut", "Manicure" , "Pedicure", "Massage", "Facial", "Waxing", "Hair Coloring", "Hair Styling,Makeup"];
       var table = new Tabulator("#bookings-table", {
         data: [], // Your booking data here
         layout: "fitColumns",
         columns: [
           { title: "ID", field: "_id" },
           { title: "Name", field: "name", editor: "input" },
-          { title: "Service", field: "service", editor: "input" },
+          { title: "Service", field: "service",
+            editor: "select",
+            editorParams: {
+              values: ddValues,
+            },
+          },
           { title: "Date",
             field: "date",
             formatter: (cell) => {
@@ -395,7 +401,6 @@ const formatDateToISO = (dateStr) => {
   return dateStr;
 }
 
-// not used
 const formatDateForFlatpickr = (isoDateString) =>{
   if (!isoDateString) return null;
   const date = new Date(isoDateString);
@@ -536,13 +541,16 @@ const getBookings = async () => {
       return data.bookings; // Return the bookings data
     } else {
       console.error('Failed to fetch bookings:', data.error);
-      alert(data.error || 'Failed to fetch bookings.');
+      // if(data.error) alert('Session expired, please login again.');
       if(data.message == 'Not authorized, token failed' && data.error == 'jwt expired') {
-        alert('You are not authorized to view this page. Redirecting to login page...');
+        alert('Session expired, You are not authorized to view this page. Redirecting to login page...');
         forceLogout(); // Call force logout function to clear token and redirect
         setTimeout(() => {
           window.location.href = '/signin/login.html';
         }, 3000);
+      }
+      else if(data.error) {
+        alert(`Error: ${data.error}`);
       }
       return [];
     }
@@ -632,6 +640,10 @@ window.onload = () => {
   const adminLink = document.getElementById('admin-link');
   const logoutLink = document.getElementById('logout-link');
   const profilelink = document.getElementById('profile-link');
+  const userDropdown = document.getElementById('user-dropdown');
+  const userName = document.getElementById('user-name');
+  const usernameText= document.getElementById('username-text');
+  const dropdownMenu = document.getElementById('dropdown-menu');
 
   const appointmentId = getUrlParameter('id');
   const service = getUrlParameter('service');
@@ -652,6 +664,18 @@ window.onload = () => {
   if (token) {
     console.log('User is logged in.');
     const decoded = decodeToken();
+
+    userDropdown.classList.remove('hidden');
+    usernameText.innerText = decoded.name || 'User';
+    userName.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (event) => {
+      if (!userDropdown.contains(event.target)) {
+        dropdownMenu.classList.add('hidden');
+      }
+    });
+
     // Hide login and signup links
     loginLink.classList.add('hidden');
     signupLink.classList.add('hidden');
